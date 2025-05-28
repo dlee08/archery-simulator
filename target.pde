@@ -1,21 +1,44 @@
+float targetX, targetY;
+float targetRadius = 80;
+
 void setup() {
-  size(400, 400);
-  background(255);
-  noLoop();
+  size(600, 400);
+  targetX = width / 2;
+  targetY = height / 2;
 }
 
 void draw() {
-  int centerX = width / 2;
-  int centerY = height / 2;
-  int maxRadius = 150;
-  int rings = 6;
+  background(220);
+  
+  int rings = 5;
+  float ringWidth = targetRadius / rings;
   
   for (int i = rings; i > 0; i--) {
     if (i % 2 == 0) {
-      fill(255, 0, 0);  // Red
+      fill(255);
     } else {
-      fill(255);        // White
+      fill(0);
     }
-    ellipse(centerX, centerY, i * maxRadius / rings * 2, i * maxRadius / rings * 2);
+    ellipse(targetX, targetY, ringWidth * 2 * i, ringWidth * 2 * i);
   }
+  
+  fill(255, 0, 0);
+  ellipse(targetX, targetY, ringWidth * 2, ringWidth * 2);
+}
+
+void keyPressed() {
+  float step = 5;
+  
+  if (keyCode == UP) {
+    targetY -= step;
+  } else if (keyCode == DOWN) {
+    targetY += step;
+  } else if (keyCode == LEFT) {
+    targetX -= step;
+  } else if (keyCode == RIGHT) {
+    targetX += step;
+  }
+  
+  targetX = constrain(targetX, targetRadius, width - targetRadius);
+  targetY = constrain(targetY, targetRadius, height - targetRadius);
 }

@@ -1,99 +1,95 @@
+// Arrow.pde
 class Arrow {
   float x, y;
-  float baseSize;
-  float speed;
-  boolean flying;
-  boolean stuck;
-  int score;
+  float speedY = 15;
+  boolean flying = false;
+  boolean stuck = false;
+  float headX, headY;
 
   Arrow(float startX, float startY) {
     x = startX;
     y = startY;
-    baseSize = 40;
-    speed = 10;
-    flying = false;
-    stuck = false;
-    score = 0;
+    computeHead();
   }
 
   void update() {
     if (flying && !stuck) {
-      y -= speed;
-      baseSize = map(y, height - 50, 100, 40, 10);
-      baseSize = constrain(baseSize, 10, 40);
-
+      y -= speedY;
+      computeHead();
       if (y <= 100) {
-        y = 100;
         flying = false;
         stuck = true;
       }
     }
   }
 
-void display() {
-  pushMatrix();
-  translate(x, y);
+  void display() {
+    pushMatrix();
+    translate(x, y);
+    float size = map(y, height - 50, 100, 40, 10);
+    size = constrain(size, 10, 40);
+    noStroke();
+    fill(120, 60, 20);
+    float shaftWidth = size * 0.15;
+    float shaftHeight = size * 1.5;
+    rect(-shaftWidth / 2, -shaftHeight / 2, shaftWidth, shaftHeight);
+    fill(200, 0, 0);
+    float headWidth = size * 0.5;
+    float headHeight = size * 0.6;
+    triangle(-headWidth / 2, -shaftHeight / 2,
+             headWidth / 2, -shaftHeight / 2,
+             0, -shaftHeight / 2 - headHeight);
+    fill(255);
+    float featherWidth = size * 0.2;
+    float featherHeight = size * 0.4;
+    float featherSpacing = featherWidth * 1.2;
+    pushMatrix();
+    translate(0, shaftHeight / 2 - featherHeight / 2);
+    pushMatrix();
+    rotate(radians(-20));
+    rect(-featherSpacing, 0, featherWidth, featherHeight, featherWidth * 0.3);
+    popMatrix();
+    rect(-featherWidth / 2, 0, featherWidth, featherHeight, featherWidth * 0.3);
+    pushMatrix();
+    rotate(radians(20));
+    rect(featherSpacing - featherWidth, 0, featherWidth, featherHeight, featherWidth * 0.3);
+    popMatrix();
+    popMatrix();
+    popMatrix();
+  }
 
-  float size = map(y, height - 50, 100, 40, 10);
-  size = constrain(size, 10, 40);
-  
-  noStroke();
+  void computeHead() {
+    float size = map(y, height - 50, 100, 40, 10);
+    size = constrain(size, 10, 40);
+    float shaftHeight = size * 1.5;
+    float headHeight = size * 0.6;
+    headX = x;
+    headY = y - (shaftHeight / 2 + headHeight);
+  }
 
-  // Shaft (thinner)
-  fill(120, 60, 20);
-  float shaftWidth = size * 0.15f;
-  float shaftHeight = size * 1.5f;
-  rect(-shaftWidth / 2, -shaftHeight / 2, shaftWidth, shaftHeight);
+  float getHeadX() {
+    return headX;
+  }
 
-  fill(200, 0, 0);
-  float headWidth = size * 0.5f;
-  float headHeight = size * 0.6f;
-  triangle(-headWidth / 2, -shaftHeight / 2,
-           headWidth / 2, -shaftHeight / 2,
-           0, -shaftHeight / 2 - headHeight);
+  float getHeadY() {
+    return headY;
+  }
 
-  fill(255, 255, 255);
-  float featherWidth = size * 0.2f;
-  float featherHeight = size * 0.4f;
-  float featherSpacing = featherWidth * 1.2f;
-
-  pushMatrix();
-  translate(0, shaftHeight / 2 - featherHeight / 2);
-  
-  pushMatrix();
-  rotate(radians(-20));
-  rect(-featherSpacing, 0, featherWidth, featherHeight, featherWidth * 0.3f);
-  popMatrix();
-  
-  rect(-featherWidth / 2, 0, featherWidth, featherHeight, featherWidth * 0.3f);
-  
-  pushMatrix();
-  rotate(radians(20));
-  rect(featherSpacing - featherWidth, 0, featherWidth, featherHeight, featherWidth * 0.3f);
-  popMatrix();
-
-  popMatrix();
-
-  popMatrix();
-}
-
+  boolean isAtTarget(float targetY) {
+    return y <= targetY + 5;
+  }
 
   void fire() {
-    if (!flying && !stuck) {
-      flying = true;
-    }
+    flying = true;
+    stuck = false;
+    computeHead();
   }
 
   void reset(float startX, float startY) {
     x = startX;
     y = startY;
-    baseSize = 40;
     flying = false;
     stuck = false;
-    score = 0;
-  }
-
-  boolean isAtTarget(float targetY) {
-    return stuck && y == targetY;
+    computeHead();
   }
 }

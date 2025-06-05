@@ -1,4 +1,3 @@
-// Target.pde
 class Target {
   float x, y;
   float baseRadius;

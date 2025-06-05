@@ -1,7 +1,8 @@
-// Arrow.pde
 class Arrow {
   float x, y;
   float speedY = 15;
+  float gravity = 0.2;
+  float wind = 0;
   boolean flying = false;
   boolean stuck = false;
   float headX, headY;
@@ -15,6 +16,10 @@ class Arrow {
   void update() {
     if (flying && !stuck) {
       y -= speedY;
+      speedY = max(5, speedY - gravity);
+      speedY *= 0.995;
+      x += wind;
+      wind *= 0.99;
       computeHead();
       if (y <= 100) {
         flying = false;
@@ -75,19 +80,19 @@ class Arrow {
     return headY;
   }
 
-  boolean isAtTarget(float targetY) {
-    return y <= targetY + 5;
-  }
-
   void fire() {
     flying = true;
     stuck = false;
+    speedY = 15;                
+    wind = random(-2, 2);       
     computeHead();
   }
 
   void reset(float startX, float startY) {
     x = startX;
     y = startY;
+    speedY = 15;
+    wind = 0;
     flying = false;
     stuck = false;
     computeHead();

@@ -1,29 +1,30 @@
 class GameManager {
   Arrow arrow;
+  Arrow stuckArrow;
   Target target;
   int player1Score = 0;
   int player2Score = 0;
   int currentPlayer = 1;
   boolean shotInProgress = false;
-  boolean scoredThisShot = false;
   boolean twoPlayerMode;
-  int lastShotPoints = -1;
   float stuckOffsetX, stuckOffsetY;
 
   GameManager(boolean twoPlayerMode) {
     this.twoPlayerMode = twoPlayerMode;
     target = new Target(width/2, height/4);
-    arrow = new Arrow(width/2, height - 50);
+    arrow  = new Arrow(width/2, height - 50);
+    stuckArrow = null;
   }
 
   void update() {
     target.move();
     target.display();
 
-    if (arrow.stuck && scoredThisShot && lastShotPoints > 0) {
-      arrow.x = target.x + stuckOffsetX;
-      arrow.y = target.y + stuckOffsetY;
-      arrow.computeHead();
+    if (stuckArrow != null) {
+      stuckArrow.x = target.x + stuckOffsetX;
+      stuckArrow.y = target.y + stuckOffsetY;
+      stuckArrow.computeHead();
+      stuckArrow.display();
     }
 
     if (!shotInProgress && !arrow.flying && !arrow.stuck) {
@@ -34,27 +35,32 @@ class GameManager {
       shotInProgress = true;
       arrow.update();
       arrow.display();
-    } else if (arrow.stuck && !scoredThisShot) {
+    }
+    else if (arrow.stuck) {
       arrow.display();
       float hx = arrow.getHeadX();
       float hy = arrow.getHeadY();
       int pts = target.scoreShot(hx, hy);
-      lastShotPoints = pts;
-      if (currentPlayer == 1) player1Score += pts;
-      else player2Score += pts;
-      scoredThisShot = true;
-      if (pts == 0) {
-        arrow.reset(width/2, height - 50);
-        shotInProgress = false;
-        scoredThisShot = false;
-        togglePlayer();
-      } else {
+
+      if (pts > 0) {
+        if (currentPlayer == 1) player1Score += pts;
+        else                  player2Score += pts;
+
         stuckOffsetX = arrow.x - target.x;
         stuckOffsetY = arrow.y - target.y;
+        stuckArrow = arrow;
+
+        arrow = new Arrow(width/2, height - 50);
+        shotInProgress = false;
+        togglePlayer();
+      } 
+      else {
+        arrow.reset(width/2, height - 50);
+        shotInProgress = false;
+        togglePlayer();
       }
-    } else if (arrow.stuck && scoredThisShot) {
-      arrow.display();
-    } else {
+    }
+    else {
       arrow.display();
     }
 
@@ -64,16 +70,12 @@ class GameManager {
   void display() {}
 
   void mousePressed() {
-    if (arrow.stuck && scoredThisShot && lastShotPoints > 0) {
-      arrow.reset(width/2, height - 50);
-      shotInProgress = false;
-      scoredThisShot = false;
-      togglePlayer();
+    if (stuckArrow != null) {
+      stuckArrow = null;
     }
     if (!shotInProgress && !arrow.flying && !arrow.stuck) {
       arrow.fire();
       shotInProgress = true;
-      scoredThisShot = false;
     }
   }
 
@@ -85,7 +87,6 @@ class GameManager {
     if (arrow.stuck && (key == 'r' || key == 'R')) {
       arrow.reset(width/2, height - 50);
       shotInProgress = false;
-      scoredThisShot = false;
       return;
     }
     target.handleKey(keyCode, key);
@@ -99,9 +100,12 @@ class GameManager {
     fill(0);
     textAlign(CENTER, TOP);
     textSize(16);
-    text("P1: " + player1Score + "   P2: " + player2Score, width/2, 10);
+    text("P1: " + player1Score + "   P2: " + player2Score,
+         width/2, 10);
     textSize(14);
-    text((currentPlayer == 1 ? "Player 1’s turn" : "Player 2’s turn"), width/2, 30);
+    text((currentPlayer == 1 ? "Player 1’s turn"
+                             : "Player 2’s turn"),
+         width/2, 30);
   }
 
   void resetGame() {
@@ -109,8 +113,8 @@ class GameManager {
     player2Score = 0;
     currentPlayer = 1;
     arrow.reset(width/2, height - 50);
+    stuckArrow = null;
     shotInProgress = false;
-    scoredThisShot = false;
     target = new Target(width/2, height/4);
   }
 }

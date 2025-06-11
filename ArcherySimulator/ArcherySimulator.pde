@@ -6,7 +6,7 @@ void setup() {
 }
 
 void draw() {
-  background(200);
+  drawBackground();
   game.update();
   game.display();
 }

@@ -1,164 +1,109 @@
-final int TOTAL_ROUNDS = 5;
-Player player1, player2;
-int currentPlayerIndex;
-int currentRound;
-boolean inSuddenDeath = false;
-boolean shotInProgress = false;
+class GameManager {
+  Arrow arrow;
+  Target target;
+  int player1Score = 0;
+  int player2Score = 0;
+  int currentPlayer = 1; 
+  boolean shotInProgress = false;
+  boolean scoredThisShot = false;
+  boolean twoPlayerMode;
 
-Target target;
-Arrow currentArrow;
-Environment environment;
-Scoreboard scoreboard;
+  GameManager(boolean twoPlayerMode) {
+    this.twoPlayerMode = twoPlayerMode;
+    target = new Target(width/2, height/4);
+    arrow  = new Arrow(width/2, height - 50);
+  }
 
-int canvasWidth, canvasHeight;
+  void update() {
+    target.move();
+    target.display();
 
-GameManager(int w, int h) {
-  canvasWidth = w;
-  canvasHeight = h;
-  environment = new Environment();
-  target = new Target(new PVector(w - 150, h/2), 80, 6, environment);
-  scoreboard = new Scoreboard(20, 20);
-}
-
-void startSinglePlayer() {
-  player1 = new HumanPlayer("You", new PVector(100, canvasHeight - 100), environment);
-  player2 = new ComputerPlayer("CPU", new PVector(100, canvasHeight - 100), environment, target);
-  resetMatch();
-}
-
-void startTwoPlayer() {
-  player1 = new HumanPlayer("Player 1", new PVector(100, canvasHeight - 150), environment);
-  player2 = new HumanPlayer("Player 2", new PVector(100, 100), environment);
-  resetMatch();
-}
-
-void resetMatch() {
-  currentPlayerIndex = 0;
-  currentRound = 1;
-  inSuddenDeath = false;
-  shotInProgress = false;
-  scoreboard.reset();
-}
-
-void update() {
-  target.update();
-  if (shotInProgress && currentArrow != null) {
-    currentArrow.update();
-    if (currentArrow.hasLanded()) {
-      int points = target.checkHit(currentArrow);
-      getCurrentPlayer().addScore(points);
-      scoreboard.updateScore(getCurrentPlayer().getName(), points);
-      shotInProgress = false;
-      currentArrow = null;
-      advanceTurn();
+    if (!shotInProgress && !arrow.flying && !arrow.stuck) {
+      arrow.x = mouseX;
     }
-  } else {
-    Player p = getCurrentPlayer();
-    if (p instanceof ComputerPlayer && !shotInProgress) {
-      currentArrow = p.takeTurn();
+
+    if (arrow.flying) {
       shotInProgress = true;
+      arrow.update();
+      arrow.display();
     }
-  }
-}
 
-void display() {
-  target.display();
-  if (currentArrow != null) {
-    currentArrow.display();
-  }
-  player1.display();
-  player2.display();
-  scoreboard.display();
-  if (!shotInProgress && getCurrentPlayer() instanceof HumanPlayer) {
-    ((HumanPlayer)getCurrentPlayer()).displayAim();
-  }
-  fill(0);
-  textSize(16);
-  if (!inSuddenDeath) {
-    text("Round " + currentRound + " / " + TOTAL_ROUNDS, canvasWidth/2, 20);
-  } else {
-    text("Sudden Death!", canvasWidth/2, 20);
-  }
-}
-
-void mousePressed() {
-  if (!shotInProgress && getCurrentPlayer() instanceof HumanPlayer) {
-    ((HumanPlayer)getCurrentPlayer()).startAiming(mouseX, mouseY);
-  }
-}
-
-void mouseDragged() {
-  if (!shotInProgress && getCurrentPlayer() instanceof HumanPlayer) {
-    ((HumanPlayer)getCurrentPlayer()).updateAiming(mouseX, mouseY);
-  }
-}
-
-void mouseReleased() {
-  if (!shotInProgress && getCurrentPlayer() instanceof HumanPlayer) {
-    currentArrow = ((HumanPlayer)getCurrentPlayer()).releaseArrow();
-    if (currentArrow != null) {
-      shotInProgress = true;
-    }
-  }
-}
-
-Player getCurrentPlayer() {
-  return (currentPlayerIndex == 0) ? player1 : player2;
-}
-
-void advanceTurn() {
-  if (!inSuddenDeath) {
-    if (currentPlayerIndex == 1) {
-      if (currentRound >= TOTAL_ROUNDS) {
-        if (player1.getScore() == player2.getScore()) {
-          inSuddenDeath = true;
-        } else {
-          endMatch();
-          return;
-        }
+    else if (arrow.stuck && !scoredThisShot) {
+      arrow.display();
+      float hx = arrow.getHeadX();
+      float hy = arrow.getHeadY();
+      int pts = target.scoreShot(hx, hy);
+      if (currentPlayer == 1) {
+        player1Score += pts;
       } else {
-        currentRound++;
+        player2Score += pts;
       }
+      scoredThisShot = true;
     }
-    currentPlayerIndex = (currentPlayerIndex + 1) % 2;
-  } else {
-    if (currentPlayerIndex == 1) {
-      int p1RoundScore = scoreboard.getLastRoundScore(player1.getName());
-      int p2RoundScore = scoreboard.getLastRoundScore(player2.getName());
-      if (p1RoundScore != p2RoundScore) {
-        endMatch();
-        return;
-      }
+
+    else if (arrow.stuck && scoredThisShot) {
+      arrow.reset(width/2, height - 50);
+      scoredThisShot = false;
+      shotInProgress = false;
+      togglePlayer();
     }
-    currentPlayerIndex = (currentPlayerIndex + 1) % 2;
-  }
-}
+    else {
+      arrow.display();
+    }
 
-void endMatch() {
-  String winner;
-  if (player1.getScore() > player2.getScore()) {
-    winner = player1.getName();
-  } else if (player2.getScore() > player1.getScore()) {
-    winner = player2.getName();
-  } else {
-    winner = "No one—tie!";
+    displayScoreboard();
   }
-  showWinnerDialog(winner);
-  noLoop();
-}
 
-void showWinnerDialog(String w) {
-  while (true) {
-    background(150);
+  void display() {
+  }
+
+  void mousePressed() {
+    if (!shotInProgress && !arrow.flying && !arrow.stuck) {
+      arrow.fire();
+      shotInProgress = true;
+      scoredThisShot = false;
+    }
+  }
+
+  void keyPressed() {
+    if (key == 'r' || key == 'R') {
+      resetGame();
+      return;
+    }
+    if (arrow.stuck && (key == 'r' || key == 'R')) {
+      arrow.reset(width/2, height - 50);
+      shotInProgress = false;
+      scoredThisShot = false;
+      return;
+    }
+    target.handleKey(keyCode, key);
+  }
+
+  void togglePlayer() {
+    currentPlayer = (currentPlayer == 1) ? 2 : 1;
+  }
+
+  void displayScoreboard() {
     fill(0);
-    textSize(32);
-    text("Winner: " + w, width/2, height/2);
-    textSize(18);
-    text("Press any key to exit", width/2, height/2 + 50);
-    if (keyPressed || mousePressed) {
-      break;
+    textAlign(CENTER, TOP);
+    textSize(16);
+    text("P1: " + player1Score + "   P2: " + player2Score, width/2, 10);
+
+    textSize(14);
+    if (currentPlayer == 1) {
+      text("Player 1’s turn", width/2, 30);
+    } else {
+      text("Player 2’s turn", width/2, 30);
     }
-    delay(20);
   }
-  exit();
+
+  void resetGame() {
+    player1Score = 0;
+    player2Score = 0;
+    currentPlayer = 1;
+    arrow.reset(width/2, height - 50);
+    shotInProgress = false;
+    scoredThisShot = false;
+    target = new Target(width/2, height/4);
+  }
 }

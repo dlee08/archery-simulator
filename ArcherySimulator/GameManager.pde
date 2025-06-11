@@ -1,76 +1,104 @@
 class GameManager {
-  Arrow arrow;
-  Arrow stuckArrow;
+  Arrow arrow, stuckArrow;
   Target target;
   int player1Score = 0, player2Score = 0;
   int currentPlayer = 1;
-  boolean shotInProgress = false;
-  boolean twoPlayerMode;
+  boolean shotInProgress = false, twoPlayerMode;
   float stuckOffX, stuckOffY;
   boolean holding = false;
   int holdStart;
   final int MAX_HOLD = 5000;
   float power = 0;
   String message = "";
-  int messageTimer = 0;
-  final int MESSAGE_DURATION = 120;
+  int messageTimer = 0, lastSwitchTime = 0;
+  final int MESSAGE_DURATION = 120, COMP_DELAY = 3000;
   boolean ignoreRelease = true;
-  int lastSwitchTime = 0;
-  final int COMP_DELAY = 3000;
+
+  // new wind field
+  float windValue;
 
   GameManager(boolean twoPlayerMode, float tx, float ty, float tSize) {
     this.twoPlayerMode = twoPlayerMode;
-    target = new Target(tx, ty, tSize);
-    arrow = new Arrow(width/2, height - 50);
+    target   = new Target(tx, ty, tSize);
+    arrow    = new Arrow(width/2, height - 50);
     stuckArrow = null;
     lastSwitchTime = millis();
     ignoreRelease = true;
+    pickNewWind();
+  }
+
+  // call at start of turn
+  void pickNewWind() {
+    windValue = random(-2, 2);
+  }
+
+  boolean isGameOver() {
+    return player1Score >= 25 || player2Score >= 25;
+  }
+
+  String getWinner() {
+    if (player1Score >= 25) return twoPlayerMode ? "Player 1" : "Computer";
+    else                     return "Player 2";
   }
 
   void computerShoot() {
     messageTimer = 0;
-    float r = random(target.ringWidth, target.baseRadius);
-    float ang = random(TWO_PI);
-    arrow.x = target.x + r * cos(ang);
+    float r = randomGaussian() * target.baseRadius * 0.2;
+    r = constrain(r, -target.baseRadius*0.8, target.baseRadius*0.8);
+    arrow.x = target.x + r;
     float cpuPower = constrain(randomGaussian()*0.1 + 0.7, 0.4, 1);
-    arrow.fire(cpuPower);
+    arrow.fire(cpuPower, windValue);
     shotInProgress = true;
   }
 
   void update() {
     if (ignoreRelease && !mousePressed) ignoreRelease = false;
+
     target.display();
-    if (!twoPlayerMode && currentPlayer == 1
-        && millis() - lastSwitchTime >= COMP_DELAY
+
+    if (!shotInProgress && !arrow.flying && !arrow.stuck) {
+      fill(0);
+      textAlign(CENTER, TOP);
+      textSize(16);
+      String dir = windValue > 0 ? "→" : windValue < 0 ? "←" : "—";
+      text("Wind: " + dir + " " + nf(abs(windValue),1,2), 3*width/4, 100);
+    }
+
+    // computer turn
+    if (!twoPlayerMode && currentPlayer==1
+        && millis()-lastSwitchTime >= COMP_DELAY
         && !shotInProgress && !arrow.flying && !arrow.stuck) {
       computerShoot();
     }
+
     if (stuckArrow != null) {
       stuckArrow.x = target.x + stuckOffX;
       stuckArrow.y = target.y + stuckOffY;
       stuckArrow.computeHead();
       stuckArrow.display();
     }
-    if (mousePressed && !holding && !shotInProgress && stuckArrow == null
+
+    // player CLICK+HOLD
+    if (mousePressed && !holding && !shotInProgress && stuckArrow==null
         && !arrow.flying && !arrow.stuck
-        && (twoPlayerMode || currentPlayer == 2)
+        && (twoPlayerMode||currentPlayer==2)
         && !ignoreRelease) {
       holding = true;
       holdStart = millis();
     }
+
     if (holding) {
       float elapsed = millis() - holdStart;
       power = min(1, elapsed/(float)MAX_HOLD);
       arrow.x = mouseX;
       arrow.display();
-      float bw=50, bh=5;
       stroke(0); noFill();
-      rect(arrow.x+10, arrow.y-20, bw, bh);
+      rect(arrow.x+10, arrow.y-20, 50, 5);
       noStroke(); fill(0,255,0);
-      rect(arrow.x+10, arrow.y-20, bw*power, bh);
+      rect(arrow.x+10, arrow.y-20, 50*power, 5);
       if (!mousePressed || elapsed>=MAX_HOLD) {
         messageTimer = 0;
-        arrow.fire(power);
+        arrow.fire(power, windValue);
         shotInProgress = true;
         holding = false;
       }
@@ -78,18 +106,21 @@ class GameManager {
       displayMessage();
       return;
     }
+
     if (!shotInProgress && !arrow.flying && !arrow.stuck
-        && (twoPlayerMode || currentPlayer == 2)) {
+        && (twoPlayerMode||currentPlayer==2)) {
       arrow.x = mouseX;
     }
+
     if (arrow.flying) {
       shotInProgress = true;
       arrow.update();
       arrow.display();
-    } else if (arrow.stuck) {
+    } 
+    else if (arrow.stuck) {
       arrow.display();
       float hx=arrow.getHeadX(), hy=arrow.getHeadY();
-      int pts=target.scoreShot(hx,hy);
+      int pts = target.scoreShot(hx, hy);
       String who = twoPlayerMode
                    ? "Player "+currentPlayer
                    : (currentPlayer==1?"Computer":"Player");
@@ -111,14 +142,17 @@ class GameManager {
         shotInProgress = false;
         togglePlayer();
       }
-    } else {
+    } 
+    else {
       arrow.display();
     }
+
     displayScoreboard();
     displayMessage();
   }
 
-  void display() {}
+  // stub so ArcherySimulator.pde's game.display() compiles
+  void display() { }
 
   void displayMessage() {
     if (messageTimer>0) {
@@ -136,10 +170,9 @@ class GameManager {
   }
 
   void keyPressed() {
-    if (key=='r'||key=='R') { resetGame(); return; }
-    if (arrow.stuck&&(key=='r'||key=='R')) {
-      arrow.reset(width/2, height-50);
-      shotInProgress=false;
+    if ((key=='r'||key=='R') && !arrow.flying) {
+      resetGame();
+      return;
     }
   }
 
@@ -147,6 +180,7 @@ class GameManager {
     currentPlayer = (currentPlayer==1)?2:1;
     lastSwitchTime = millis();
     ignoreRelease = true;
+    pickNewWind();
   }
 
   void displayScoreboard() {
@@ -158,9 +192,11 @@ class GameManager {
     fill(0);
     textAlign(CENTER,CENTER);
     textSize(20);
-    String leftLbl = twoPlayerMode ? "P1: "+player1Score : "Comp: "+player1Score;
+    String leftLbl = twoPlayerMode ? "P1: "+player1Score
+                                   : "Comp: "+player1Score;
     text(leftLbl,165,50);
     text("P2: "+player2Score,435,50);
+    // highlight
     if (currentPlayer==1) fill(255,215,0); else fill(200);
     rect(75,18,180,5,2);
     if (currentPlayer==2) fill(255,215,0); else fill(200);
@@ -177,5 +213,6 @@ class GameManager {
     messageTimer=0;
     lastSwitchTime=millis();
     ignoreRelease=true;
+    pickNewWind();
   }
 }

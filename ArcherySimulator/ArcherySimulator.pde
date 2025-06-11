@@ -1,3 +1,4 @@
+// ArcherySimulator.pde
 int screen = 0;
 boolean twoPlayerMode;
 float targetX, targetY, targetSize;
@@ -19,9 +20,13 @@ void draw() {
     drawSettings();
   } 
   else {
-    drawBackground();
-    game.update();
-    game.display();
+    if (game.isGameOver()) {
+      drawEndScreen();
+    } else {
+      drawBackground();
+      game.update();
+      game.display();
+    }
   }
 }
 
@@ -48,6 +53,10 @@ void mousePressed() {
     }
   } 
   else {
+    if (game.isGameOver()) {
+      screen = 0;
+      return;
+    }
     game.mousePressed();
   }
 }
@@ -75,31 +84,42 @@ void drawModeSelect() {
   float bx = width/2-100, bw=200, bh=50;
   float by1 = height/2-40, by2 = height/2+20;
   fill(230);
-  rect(bx, by1, bw, bh, 10);
-  rect(bx, by2, bw, bh, 10);
+  rect(bx,by1,bw,bh,10);
+  rect(bx,by2,bw,bh,10);
   fill(0);
   textSize(20);
-  text("Single Player", width/2, by1 + bh/2);
-  text("Two Players",  width/2, by2 + bh/2);
+  text("Single Player", width/2, by1+bh/2);
+  text("Two Players",  width/2, by2+bh/2);
 }
 
 void drawSettings() {
   background(240);
-
   drawBackground();
   Target preview = new Target(targetX, targetY, targetSize);
   preview.display();
-
   fill(0);
   textAlign(LEFT, CENTER);
   textSize(18);
   text("Move target: WASD or arrows", 20, height - 140);
   text("Resize (N/M): " + nf(targetSize,0,0), 20, height - 110);
-  // Confirm button
   fill(200);
   rect(width/2-50, height-90, 100, 40, 5);
   fill(0);
   textAlign(CENTER, CENTER);
   textSize(20);
   text("Confirm", width/2, height-70);
+}
+
+void drawEndScreen() {
+  background(0, 255, 0);
+  fill(0);
+  textAlign(CENTER, CENTER);
+  textSize(36);
+  text(game.getWinner() + " wins!", width/2, height/2 - 20);
+  float bx = width/2 - 75, bw = 150, bh = 50, by = height/2 + 20;
+  fill(200);
+  rect(bx, by, bw, bh, 5);
+  fill(0);
+  textSize(24);
+  text("Play Again", width/2, by + bh/2);
 }

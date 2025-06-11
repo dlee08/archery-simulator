@@ -14,13 +14,19 @@ class Arrow {
     computeHead();
   }
 
-  void fire(float power) {
+  // new signature: accept explicit wind
+  void fire(float power, float windVal) {
     flying = true;
     stuck  = false;
     speedY = map(power, 0, 1, 5, 20);
-    wind   = random(-2, 2);
+    wind   = windVal;
     stopY  = map(power, 0, 1, height - 50, 0);
     computeHead();
+  }
+
+  // keep old convenience method
+  void fire(float power) {
+    fire(power, random(-2, 2));
   }
 
   void update() {

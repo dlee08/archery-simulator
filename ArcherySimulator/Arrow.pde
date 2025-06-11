@@ -17,7 +17,6 @@ class Arrow {
   void fire(float power) {
     flying = true;
     stuck  = false;
-    // reduced max speed from 30 → 20
     speedY = map(power, 0, 1, 5, 20);
     wind   = random(-2, 2);
     stopY  = map(power, 0, 1, height - 50, 0);

@@ -14,32 +14,30 @@ class Arrow {
     computeHead();
   }
 
-  // new signature: accept explicit wind
   void fire(float power, float windVal) {
     flying = true;
-    stuck  = false;
+    stuck = false;
     speedY = map(power, 0, 1, 5, 20);
-    wind   = windVal;
-    stopY  = map(power, 0, 1, height - 50, 0);
+    wind = windVal;
+    stopY = map(power, 0, 1, height - 50, 0);
     computeHead();
   }
 
-  // keep old convenience method
   void fire(float power) {
     fire(power, random(-2, 2));
   }
 
   void update() {
     if (flying && !stuck) {
-      y       -= speedY;
-      speedY   = max(5, speedY - gravity);
-      speedY  *= 0.995;
-      x       += wind;
-      wind    *= 0.99;
+      y-=speedY;
+      speedY=max(5, speedY - gravity);
+      speedY*=0.995;
+      x+=wind;
+      wind*=0.99;
       computeHead();
-      if (y <= stopY) {
-        flying = false;
-        stuck  = true;
+      if (y<=stopY) {
+        flying=false;
+        stuck=true;
       }
     }
   }
@@ -57,9 +55,7 @@ class Arrow {
     fill(255, 0, 0);
     float hw = size * 0.5;
     float hh = size * 0.6;
-    triangle(-hw/2, -sh/2,
-             hw/2,  -sh/2,
-             0,     -sh/2 - hh);
+    triangle(-hw/2, -sh/2, hw/2, -sh/2,0, -sh/2 -hh);
     fill(255);
     float fw = size * 0.2;
     float fh = size * 0.4;
@@ -80,24 +76,28 @@ class Arrow {
   }
 
   void computeHead() {
-    float size = map(y, height - 50, 0, 40, 10);
-    size = constrain(size, 10, 40);
-    float sh = size * 1.5;
-    float hh = size * 0.6;
-    headX = x;
-    headY = y - (sh/2 + hh);
+    float size=map(y,height-50,0,40,10);
+    size=constrain(size,10,40);
+    float sh=size*1.5;
+    float hh=size*0.6;
+    headX=x;
+    headY=y-(sh/2+ hh);
   }
 
-  float getHeadX() { return headX; }
-  float getHeadY() { return headY; }
+  float getHeadX() {
+    return headX;
+  }
+  float getHeadY() {
+    return headY;
+  }
 
   void reset(float startX, float startY) {
-    x       = startX;
-    y       = startY;
-    speedY  = 15;
-    wind    = 0;
-    flying  = false;
-    stuck   = false;
+    x=startX;
+    y=startY;
+    speedY=15;
+    wind=0;
+    flying=false;
+    stuck=false;
     computeHead();
   }
 }

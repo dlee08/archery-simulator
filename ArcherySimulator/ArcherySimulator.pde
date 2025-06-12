@@ -1,4 +1,3 @@
-// ArcherySimulator.pde
 int screen = 0;
 boolean twoPlayerMode;
 float targetX, targetY, targetSize;
@@ -70,9 +69,7 @@ void keyPressed() {
     if (key == 'n') targetSize = max(20, targetSize - 5);
     if (key == 'm') targetSize = min(200, targetSize + 5);
   }
-  else if (screen == 2) {
-    game.keyPressed();
-  }
+  else if (screen == 2) game.keyPressed();
 }
 
 void drawModeSelect() {
@@ -116,7 +113,10 @@ void drawEndScreen() {
   textAlign(CENTER, CENTER);
   textSize(36);
   text(game.getWinner() + " wins!", width/2, height/2 - 20);
-  float bx = width/2 - 75, bw = 150, bh = 50, by = height/2 + 20;
+  float bx = width/2 - 75;
+  float bw = 150;
+  float bh = 50;
+  float by = height/2 + 20;
   fill(200);
   rect(bx, by, bw, bh, 5);
   fill(0);

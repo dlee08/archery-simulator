@@ -15,10 +15,10 @@ void drawTree(float x, float y) {
   fill(139, 69, 19);
   rect(x - 10, y - 60, 20, 60);
   fill(34, 139, 34);
-  ellipse(x,     y - 80, 50, 50);
+  ellipse(x, y - 80, 50, 50);
   ellipse(x - 20, y - 100, 40, 40);
   ellipse(x + 20, y - 100, 40, 40);
   ellipse(x - 35, y - 80, 30, 30);
   ellipse(x + 35, y - 80, 30, 30);
-  ellipse(x,     y - 110, 30, 30);
+  ellipse(x, y - 110, 30, 30);
 }

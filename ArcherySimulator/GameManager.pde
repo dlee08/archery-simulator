@@ -1,9 +1,11 @@
 class GameManager {
   Arrow arrow, stuckArrow;
   Target target;
-  int player1Score = 0, player2Score = 0;
+  int player1Score = 0;
+  int player2Score = 0;
   int currentPlayer = 1;
-  boolean shotInProgress = false, twoPlayerMode;
+  boolean shotInProgress = false;
+  boolean twoPlayerMode;
   float stuckOffX, stuckOffY;
   boolean holding = false;
   int holdStart;
@@ -13,21 +15,18 @@ class GameManager {
   int messageTimer = 0, lastSwitchTime = 0;
   final int MESSAGE_DURATION = 120, COMP_DELAY = 3000;
   boolean ignoreRelease = true;
-
-  // new wind field
   float windValue;
 
-  GameManager(boolean twoPlayerMode, float tx, float ty, float tSize) {
+  public GameManager(boolean twoPlayerMode, float tx, float ty, float tSize) {
     this.twoPlayerMode = twoPlayerMode;
-    target   = new Target(tx, ty, tSize);
-    arrow    = new Arrow(width/2, height - 50);
+    target = new Target(tx, ty, tSize);
+    arrow = new Arrow(width/2, height - 50);
     stuckArrow = null;
     lastSwitchTime = millis();
     ignoreRelease = true;
     pickNewWind();
   }
 
-  // call at start of turn
   void pickNewWind() {
     windValue = random(-2, 2);
   }
@@ -38,7 +37,7 @@ class GameManager {
 
   String getWinner() {
     if (player1Score >= 25) return twoPlayerMode ? "Player 1" : "Computer";
-    else                     return "Player 2";
+    else { return "Player 2"; }
   }
 
   void computerShoot() {
@@ -53,9 +52,7 @@ class GameManager {
 
   void update() {
     if (ignoreRelease && !mousePressed) ignoreRelease = false;
-
     target.display();
-
     if (!shotInProgress && !arrow.flying && !arrow.stuck) {
       fill(0);
       textAlign(CENTER, TOP);
@@ -63,22 +60,17 @@ class GameManager {
       String dir = windValue > 0 ? "→" : windValue < 0 ? "←" : "—";
       text("Wind: " + dir + " " + nf(abs(windValue),1,2), 3*width/4, 100);
     }
-
-    // computer turn
     if (!twoPlayerMode && currentPlayer==1
         && millis()-lastSwitchTime >= COMP_DELAY
         && !shotInProgress && !arrow.flying && !arrow.stuck) {
       computerShoot();
     }
-
     if (stuckArrow != null) {
       stuckArrow.x = target.x + stuckOffX;
       stuckArrow.y = target.y + stuckOffY;
       stuckArrow.computeHead();
       stuckArrow.display();
     }
-
-    // player CLICK+HOLD
     if (mousePressed && !holding && !shotInProgress && stuckArrow==null
         && !arrow.flying && !arrow.stuck
         && (twoPlayerMode||currentPlayer==2)
@@ -86,7 +78,6 @@ class GameManager {
       holding = true;
       holdStart = millis();
     }
-
     if (holding) {
       float elapsed = millis() - holdStart;
       power = min(1, elapsed/(float)MAX_HOLD);
@@ -106,12 +97,9 @@ class GameManager {
       displayMessage();
       return;
     }
-
-    if (!shotInProgress && !arrow.flying && !arrow.stuck
-        && (twoPlayerMode||currentPlayer==2)) {
+    if (!shotInProgress && !arrow.flying && !arrow.stuck && (twoPlayerMode||currentPlayer==2)) {
       arrow.x = mouseX;
     }
-
     if (arrow.flying) {
       shotInProgress = true;
       arrow.update();
@@ -121,12 +109,10 @@ class GameManager {
       arrow.display();
       float hx=arrow.getHeadX(), hy=arrow.getHeadY();
       int pts = target.scoreShot(hx, hy);
-      String who = twoPlayerMode
-                   ? "Player "+currentPlayer
-                   : (currentPlayer==1?"Computer":"Player");
+      String who = twoPlayerMode ? "Player "+currentPlayer : (currentPlayer==1?"Computer":"Player");
       if (pts>0) {
         if (currentPlayer==1) player1Score+=pts;
-        else                  player2Score+=pts;
+        else { player2Score+=pts; }
         message = who+" scored "+pts+" points!";
         messageTimer = MESSAGE_DURATION;
         stuckOffX = arrow.x - target.x;
@@ -143,15 +129,13 @@ class GameManager {
         togglePlayer();
       }
     } 
-    else {
-      arrow.display();
-    }
+    else arrow.display();
 
     displayScoreboard();
     displayMessage();
   }
 
-  // stub so ArcherySimulator.pde's game.display() compiles
+  // wrapper
   void display() { }
 
   void displayMessage() {
@@ -192,11 +176,9 @@ class GameManager {
     fill(0);
     textAlign(CENTER,CENTER);
     textSize(20);
-    String leftLbl = twoPlayerMode ? "P1: "+player1Score
-                                   : "Comp: "+player1Score;
+    String leftLbl = twoPlayerMode ? "P1: " + player1Score : "Comp: " + player1Score;
     text(leftLbl,165,50);
-    text("P2: "+player2Score,435,50);
-    // highlight
+    text("P2: " + player2Score,435,50);
     if (currentPlayer==1) fill(255,215,0); else fill(200);
     rect(75,18,180,5,2);
     if (currentPlayer==2) fill(255,215,0); else fill(200);
